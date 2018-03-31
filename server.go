@@ -9,6 +9,7 @@ import (
 	"time"
 )
 
+
 var influxURL string
 var influxURI string
 
