@@ -6,9 +6,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
         "os"
+        "strconv"
 	"time"
 )
-
 
 var influxURL string
 var influxURI string
@@ -42,6 +42,7 @@ type Annotation struct {
 	Title string
 	Text  string
 	Tags  string
+        Eventtime string
 }
 
 func setenv() {
@@ -63,19 +64,25 @@ func receive_appwatcher(c *gin.Context) {
 		fmt.Println(err)
 	}
 	var annotation Annotation
-     for _, element := range json.Dynos {
+//     eventtime := time.Parse("2006–01–02T15:04:05.678Z", json.CrashedAt)
+//     eventtime :=strconv.FormatInt(json.CrashedAt.UnixNano(),10)
+//     fmt.Println(json.CrashedAt)
+//     fmt.Println(eventtime)
+     for index, element := range json.Dynos {
+        eventtime :=strconv.FormatInt(json.CrashedAt.UnixNano()+int64(index),10)
 	annotation.App = json.Key
 	annotation.Title = json.Action
 	annotation.Text = json.Description
 	annotation.Tags = json.Code + "," + json.Space.Name + "," + json.App.Name + "," + element.Type+"."+element.Dyno
-	sendAnnotation(annotation)
+        annotation.Eventtime = eventtime
+        sendAnnotation(annotation)
       }
 	c.JSON(200, nil)
 }
 
 func sendAnnotation(annotation Annotation) {
 	client := http.Client{}
-	data := "events  title=\"" + annotation.Title + "\",text=\"" + annotation.Text + "\",tags=\"" + annotation.Tags + "\",app=\"" + annotation.App + "\""
+	data := "events  title=\"" + annotation.Title + "\",text=\"" + annotation.Text + "\",tags=\"" + annotation.Tags + "\",app=\"" + annotation.App + "\" "+annotation.Eventtime
 	databytes := []byte(data)
 
 	req, err := http.NewRequest("POST",influxURL+influxURI, bytes.NewBuffer(databytes))
