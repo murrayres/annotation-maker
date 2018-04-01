@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	jsonlib "encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -67,6 +68,13 @@ func receive_appwatcher(c *gin.Context) {
 	if err != nil {
 		fmt.Println(err)
 	}
+	fmt.Println("Received event: " + json.Action)
+	b, err := jsonlib.Marshal(json)
+	if err != nil {
+		fmt.Printf("Error: %s", err)
+		return
+	}
+	fmt.Println(string(b))
 	if json.Action == "crashed" {
 		for index, element := range json.Dynos {
 			var annotation Annotation
