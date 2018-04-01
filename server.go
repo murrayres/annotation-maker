@@ -2,7 +2,7 @@ package main
 
 import (
 	"bytes"
-	jsonlib "encoding/json"
+	json "encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -63,37 +63,37 @@ func main() {
 }
 
 func receive_appwatcher(c *gin.Context) {
-	var json Appwatcher
-	err := c.BindJSON(&json)
+	var event Appwatcher
+	err := c.BindJSON(&event)
 	if err != nil {
 		fmt.Println(err)
 	}
-	fmt.Println("Received event: " + json.Action)
-	b, err := jsonlib.Marshal(json)
+	fmt.Println("Received event: " + event.Action)
+	b, err := json.Marshal(event)
 	if err != nil {
 		fmt.Printf("Error: %s", err)
 		return
 	}
 	fmt.Println(string(b))
-	if json.Action == "crashed" {
-		for index, element := range json.Dynos {
+	if event.Action == "crashed" {
+		for index, element := range event.Dynos {
 			var annotation Annotation
-			eventtime := strconv.FormatInt(json.CrashedAt.UnixNano()+int64(index), 10)
-			annotation.App = json.Key
-			annotation.Title = json.Action
-			annotation.Text = json.Description
-			annotation.Tags = json.Code + "," + json.Space.Name + "," + json.App.Name + "," + element.Type + "." + element.Dyno
+			eventtime := strconv.FormatInt(event.CrashedAt.UnixNano()+int64(index), 10)
+			annotation.App = event.Key
+			annotation.Title = event.Action
+			annotation.Text = event.Description
+			annotation.Tags = event.Code + "," + event.Space.Name + "," + event.App.Name + "," + element.Type + "." + element.Dyno
 			annotation.Eventtime = eventtime
 			sendAnnotation(annotation)
 		}
 	}
-	if json.Action == "released" {
+	if event.Action == "released" {
 		var annotation Annotation
-		eventtime := strconv.FormatInt(json.ReleasedAt.UnixNano(), 10)
-		annotation.App = json.Key
-		annotation.Title = json.Action
-		annotation.Text = json.Slug.Image
-		annotation.Tags = json.Space.Name + "," + json.App.Name
+		eventtime := strconv.FormatInt(event.ReleasedAt.UnixNano(), 10)
+		annotation.App = event.Key
+		annotation.Title = event.Action
+		annotation.Text = event.Slug.Image
+		annotation.Tags = event.Space.Name + "," + event.App.Name
 		annotation.Eventtime = eventtime
 		sendAnnotation(annotation)
 	}
